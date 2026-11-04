@@ -1,0 +1,23 @@
+summary: The wrapper resolves first on PATH and gh fails cleanly without a token
+
+prepare: |
+  envsubst '${BASE}' <workshop.yaml.in >workshop.yaml
+  workshop launch
+
+restore: |
+  workshop remove || true
+
+execute: |
+  workshop exec -- bash -lc 'readlink -f "$(type -P gh)"' | MATCH '/wrapper/gh$'
+
+  # No keyring in the runner and the plug is unconnected: gh must report
+  # "not logged in" instead of crashing.
+  workshop exec -- bash -lc 'unset GH_TOKEN GITHUB_TOKEN; gh auth status 2>&1' | MATCH 'not logged into any GitHub hosts'
+  if workshop exec -- bash -lc 'unset GH_TOKEN GITHUB_TOKEN; gh auth status >/dev/null 2>&1'; then
+    echo "gh auth status unexpectedly succeeded without a token" >&2
+    exit 1
+  fi
+  workshop info | MATCH 'status:\s+ready'
+
+debug: |
+  workshop exec -- bash -lc 'echo PATH=$PATH; type -a gh' || true

@@ -1,2 +1,5 @@
 # sdkcraft build artifacts
 *.sdk
+
+# spread state written by `sdkcraft test`
+.spread-reuse.yaml

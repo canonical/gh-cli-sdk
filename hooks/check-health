@@ -1,0 +1,24 @@
+#!/bin/bash
+# check-health: runs as root. Verifies that gh resolves to the wrapper and
+# starts. It deliberately does not depend on the github-token secret being
+# connected: an unconnected plug is a normal state for a fresh workshop.
+
+set -euo pipefail
+
+if ! resolved=$(sudo -u workshop --login bash -c 'command -v gh' 2>&1); then
+  workshopctl set-health waiting "gh is not on PATH: $resolved"
+  exit
+fi
+
+if [[ "$resolved" != "$SDK/wrapper/gh" ]]; then
+  workshopctl set-health error --code=wrapper-not-on-path \
+    "gh resolves to $resolved instead of $SDK/wrapper/gh"
+  exit
+fi
+
+if ! output=$(sudo -u workshop --login gh --version 2>&1); then
+  workshopctl set-health waiting "$output"
+  exit
+fi
+
+workshopctl set-health okay

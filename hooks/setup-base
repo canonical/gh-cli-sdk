@@ -1,0 +1,18 @@
+#!/bin/bash
+# setup-base: runs as root, before any plug is connected. Puts the wrapper
+# directory (not the real binary's) on PATH so every gh invocation goes
+# through the github-token secret lookup, and installs shell completions
+# (the release tarball ships none, so they are generated from the binary).
+
+set -euo pipefail
+
+cat <<EOF >/etc/profile.d/gh-cli.sh
+export PATH="$SDK/wrapper:\$PATH"
+EOF
+
+install -d /usr/share/bash-completion/completions \
+  /usr/share/zsh/vendor-completions \
+  /usr/share/fish/vendor_completions.d
+"$SDK/bin/gh" completion -s bash >/usr/share/bash-completion/completions/gh
+"$SDK/bin/gh" completion -s zsh >/usr/share/zsh/vendor-completions/_gh
+"$SDK/bin/gh" completion -s fish >/usr/share/fish/vendor_completions.d/gh.fish

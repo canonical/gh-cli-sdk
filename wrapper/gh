@@ -1,0 +1,21 @@
+#!/usr/bin/bash
+# Runs gh with its token from the workshop secret, if one is connected.
+# A GH_TOKEN or GITHUB_TOKEN already set in the environment takes precedence.
+# If the plug is unconnected or the lookup fails, gh starts without a token
+# and falls back to its own login state (the gh-config mount); the silent
+# fallback is intentional. Only this wrapper is on $PATH.
+
+sdk_dir=$(dirname "$(dirname "$(readlink -f "$0")")")
+
+# The SDK pins the gh version, so the "new release available" notice would
+# point users at a manual upgrade outside Workshop's version management.
+export GH_NO_UPDATE_NOTIFIER="${GH_NO_UPDATE_NOTIFIER:-1}"
+
+if [[ -z "${GH_TOKEN:-}" && -z "${GITHUB_TOKEN:-}" ]]; then
+  if token=$(workshopctl get-secret gh-cli.github-token 2>/dev/null) && [[ -n "$token" ]]; then
+    export GH_TOKEN="$token"
+  fi
+  unset token
+fi
+
+exec "$sdk_dir/bin/gh" "$@"

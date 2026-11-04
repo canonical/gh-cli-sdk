@@ -1,0 +1,24 @@
+summary: The gh configuration directory is a workshop-owned mount
+
+prepare: |
+  envsubst '${BASE}' <workshop.yaml.in >workshop.yaml
+  workshop launch
+
+restore: |
+  workshop remove || true
+
+execute: |
+  workshop exec -- bash -lc 'findmnt -n -o TARGET /home/workshop/.config/gh' | MATCH '^/home/workshop/\.config/gh$'
+  workshop exec -- bash -lc 'stat -c %U /home/workshop/.config/gh' | MATCH '^workshop$'
+  workshop exec -- bash -lc 'stat -c %a /home/workshop/.config/gh' | MATCH '^700$'
+  workshop exec -- bash -lc 'touch ~/.config/gh/probe && rm ~/.config/gh/probe'
+
+  workshop exec -- bash -lc 'findmnt -n -o TARGET /home/workshop/.local/share/gh' | MATCH '^/home/workshop/\.local/share/gh$'
+  workshop exec -- bash -lc 'stat -c %U /home/workshop/.local/share/gh' | MATCH '^workshop$'
+  # The mount must not leave root-owned parents that break other tools.
+  workshop exec -- bash -lc 'stat -c %U ~/.local ~/.local/share' | NOMATCH root
+  workshop exec -- bash -lc 'touch ~/.local/share/gh/probe && rm ~/.local/share/gh/probe'
+
+debug: |
+  workshop exec -- bash -lc 'findmnt /home/workshop/.config/gh /home/workshop/.local/share/gh' || true
+  workshop exec -- bash -lc 'ls -ld ~/.local ~/.local/share ~/.local/share/gh' || true

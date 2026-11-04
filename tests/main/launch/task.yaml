@@ -1,0 +1,18 @@
+summary: Launch a workshop with the gh-cli SDK and verify gh runs
+
+prepare: |
+  envsubst '${BASE}' <workshop.yaml.in >workshop.yaml
+  workshop launch
+
+restore: |
+  workshop remove || true
+
+execute: |
+  workshop exec -- bash -lc 'gh --version' | MATCH "gh version ${EXPECTED_VERSION}"
+  workshop exec -- test -s /usr/share/bash-completion/completions/gh
+  workshop exec -- test -s /usr/share/zsh/vendor-completions/_gh
+  workshop exec -- test -s /usr/share/fish/vendor_completions.d/gh.fish
+  workshop info | MATCH 'status:\s+ready'
+
+debug: |
+  workshop exec -- bash -lc 'echo PATH=$PATH' || true

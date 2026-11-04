@@ -1,0 +1,70 @@
+# GitHub CLI SDK: the upstream release tarball is downloaded and
+# checksum-verified at build time (claude-code pattern); a wrapper on PATH
+# hands the connected `github-token` secret to gh as GH_TOKEN per invocation;
+# a mount plug persists what gh writes itself (login state, config).
+
+name: gh-cli
+adopt-info: gh
+title: GitHub CLI
+summary: GitHub on the command line
+description: |
+  This SDK provides the official GitHub CLI (gh) for working with pull
+  requests, issues, releases and other GitHub resources from the terminal.
+  A GitHub token can be supplied through the github-token secret plug, and
+  gh's configuration and login state are persisted on the host across
+  workshop updates.
+license: MIT
+source-code: https://github.com/canonical/gh-cli-sdk
+website: https://cli.github.com
+platforms:
+  ubuntu@22.04:amd64:
+  ubuntu@22.04:arm64:
+  ubuntu@24.04:amd64:
+  ubuntu@24.04:arm64:
+  ubuntu@26.04:amd64:
+  ubuntu@26.04:arm64:
+
+parts:
+  gh:
+    plugin: nil
+    build-packages:
+      - ca-certificates
+      - curl
+    override-pull: |
+      VERSION=$(cat "$CRAFT_PROJECT_DIR/VERSION")
+      craftctl set version="$VERSION"
+
+      tarball="gh_${VERSION}_linux_${CRAFT_ARCH_BUILD_FOR}.tar.gz"
+      base_url="https://github.com/cli/cli/releases/download/v${VERSION}"
+      curl -fsSLo "$tarball" "$base_url/$tarball"
+      curl -fsSLo checksums.txt "$base_url/gh_${VERSION}_checksums.txt"
+
+      expected=$(awk -v f="$tarball" '$2 == f { print $1 }' checksums.txt)
+      if [[ ! "$expected" =~ ^[0-9a-f]{64}$ ]]; then
+        echo "No valid sha256 for $tarball in checksums.txt" >&2
+        exit 1
+      fi
+      echo "$expected  $tarball" | sha256sum --check --strict -
+
+      tar -xzf "$tarball" --strip-components=1
+      rm "$tarball" checksums.txt
+    override-build: |
+      # Only wrapper/ is on PATH; the wrapper execs this binary.
+      install -Dm755 bin/gh "$CRAFT_PART_INSTALL/bin/gh"
+  wrapper:
+    plugin: dump
+    source: wrapper
+    source-type: local
+    organize:
+      gh: wrapper/gh
+
+plugs:
+  gh-config:
+    interface: mount
+    workshop-target: /home/workshop/.config/gh
+    mode: 0o700
+  gh-data:
+    interface: mount
+    workshop-target: /home/workshop/.local/share/gh
+  github-token:
+    interface: secret

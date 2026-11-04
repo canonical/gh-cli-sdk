@@ -1,0 +1,26 @@
+#!/bin/bash
+# restore-state: runs as root after every SDK's setup-project, on the new
+# revision. This SDK keeps ~/.config/gh on a mount and has no save-state, so
+# this only does something when a workshop updates from the earlier gh-cli
+# SDK, which kept that directory in the workshop's writable filesystem and
+# saved it into $SDK_STATE_DIR/gh on refresh. Copy it into the mount once so
+# users keep their gh login.
+
+set -euo pipefail
+
+src="$SDK_STATE_DIR/gh"
+dest=/home/workshop/.config/gh
+
+if [[ ! -d "$src" ]]; then
+  exit 0
+fi
+
+# Never overwrite what the mount already holds.
+if [[ -n "$(find "$dest" -mindepth 1 -print -quit 2>/dev/null)" ]]; then
+  exit 0
+fi
+
+mkdir -p "$dest"
+cp -a "$src/." "$dest/"
+chown -R workshop:workshop "$dest"
+chmod 700 "$dest"

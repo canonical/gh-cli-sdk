@@ -13,19 +13,15 @@
       "matchStrings": [
         "(?<currentValue>[0-9.]+)"
       ],
-      "depNameTemplate": "TODO_DEP_NAME",
-      "datasourceTemplate": "TODO_DATASOURCE",
+      "depNameTemplate": "cli/cli",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.*)$",
       "versioningTemplate": "semver"
     }
   ],
+  "automerge": true,
+  "platformAutomerge": true,
   "baseBranchPatterns": [
-    "TODO_BRANCH"
-  ],
-  "packageRules": [
-    {
-      "matchPackageNames": ["TODO_DEP_NAME"],
-      "matchBaseBranches": ["TODO_BRANCH"],
-      "allowedVersions": "/^TODO_VERSION_PREFIX\\./"
-    }
+    "latest"
   ]
 }
