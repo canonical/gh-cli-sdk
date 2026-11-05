@@ -1,9 +1,3 @@
-# Single `latest` track. Multi-base SDK, so platforms are BASE:ARCH pairs
-# matching sdkcraft.yaml and the platform flag is --platform.
-# One matrix entry per architecture because arm64 needs an ARM runner.
-# `risk` is left at the sdkcraft-actions default (edge); setting
-# `risk: "stable"` is the promotion step.
-
 name: Build and Upload SDK
 
 on:
@@ -36,5 +30,6 @@ jobs:
       platform-flag: "--platform"
       runs-on: ${{ matrix.runs-on }}
       track: "latest"
+      risk: "stable"
     secrets:
       SDKCRAFT_STORE_CREDENTIALS: ${{ secrets.SDKCRAFT_STORE_CREDENTIALS_PROD }}
