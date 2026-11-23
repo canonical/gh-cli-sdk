@@ -11,6 +11,9 @@ sdk_dir=$(dirname "$(dirname "$(readlink -f "$0")")")
 # point users at a manual upgrade outside Workshop's version management.
 export GH_NO_UPDATE_NOTIFIER="${GH_NO_UPDATE_NOTIFIER:-1}"
 
+# Makes gh refer to itself as this wrapper, not the real binary (e.g. in the git credential helper).
+export GH_PATH="$sdk_dir/wrapper/gh"
+
 if [[ -z "${GH_TOKEN:-}" && -z "${GITHUB_TOKEN:-}" ]]; then
   if token=$(workshopctl get-secret gh-cli.github-token 2>/dev/null) && [[ -n "$token" ]]; then
     export GH_TOKEN="$token"
