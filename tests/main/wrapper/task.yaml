@@ -17,6 +17,8 @@ execute: |
     echo "gh auth status unexpectedly succeeded without a token" >&2
     exit 1
   fi
+  # The git credential helper must call the wrapper, not the bare binary.
+  workshop exec -- bash -lc 'gh auth setup-git --hostname github.com --force && git config --global --get credential.https://github.com.helper' | MATCH '/wrapper/gh auth git-credential$'
   workshop info | MATCH 'status:\s+ready'
 
 debug: |
